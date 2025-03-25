@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Scraper</title>
+    <!-- Link para importar fontes do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Amazon+Ember:wght@400&display=swap" rel="stylesheet">
+    <style>
+        /* Estilo geral do corpo da página */
+        body {
+            font-family: 'Amazon Ember', sans-serif, 'Roboto', sans-serif; /* Define a fonte padrão */
+            background-color: #f6f6f6; /* Cor de fundo suave */
+            margin: 0; /* Remove margens padrão */
+            padding: 0; /* Remove padding padrão */
+        }
+
+        /* Estilo para o título da página */
+        h1 {
+            text-align: center; /* Centraliza o título */
+            margin-top: 20px; /* Espaçamento superior */
+            font-size: 2.5rem; /* Tamanho maior para o título */
+            color: #111; /* Cor do título */
+            font-family: 'Amazon Ember', sans-serif; /* Define a fonte do título */
+        }
+
+        /* Centraliza a caixa de pesquisa e o botão */
+        .search-container {
+            text-align: center; /* Centraliza os itens */
+            margin-top: 20px; /* Espaçamento superior */
+        }
+
+        /* Estilo da caixa de pesquisa */
+        input {
+            padding: 12px; /* Padding interno */
+            font-size: 1rem; /* Tamanho da fonte */
+            width: 60%; /* Largura do campo de pesquisa */
+            max-width: 400px; /* Largura máxima */
+            border: 1px solid #ddd; /* Cor da borda */
+            border-radius: 4px; /* Bordas arredondadas */
+            display: inline-block; /* Exibição em linha */
+            margin-bottom: 10px; /* Espaçamento abaixo */
+        }
+
+        /* Estilo do botão de busca */
+        button {
+            padding: 12px; /* Padding interno */
+            font-size: 1rem; /* Tamanho da fonte */
+            width: 50%; /* Largura do botão */
+            max-width: 300px; /* Largura máxima */
+            border: 1px solid #ddd; /* Cor da borda */
+            border-radius: 4px; /* Bordas arredondadas */
+            background-color: #FF9900; /* Cor de fundo do botão */
+            color: white; /* Cor do texto */
+            font-weight: bold; /* Texto em negrito */
+            cursor: pointer; /* Cursor de ponteiro */
+            display: block; /* Exibe o botão como um bloco */
+            margin: 10px auto; /* Centraliza o botão */
+            transition: background-color 0.3s ease; /* Efeito de transição ao passar o mouse */
+        }
+
+        /* Efeito de hover (quando o mouse passa por cima) do botão */
+        button:hover {
+            background-color: #e68900; /* Cor de fundo ao passar o mouse */
+        }
+
+        /* Estilo do ícone de carregamento */
+        .loading {
+            position: block; /* Exibição em bloco */
+            margin-top: 10px; /* Espaçamento superior */
+            width: 20px; /* Largura do ícone */
+            height: 20px; /* Altura do ícone */
+            border: 3px solid #f3f3f3; /* Cor de fundo do ícone */
+            border-top: 3px solid #333; /* Cor da parte superior do ícone */
+            border-radius: 50%; /* Tornar o ícone circular */
+            animation: spin 1s linear infinite; /* Animação de rotação */
+            display: none; /* Inicialmente escondido */
+            margin-left: auto; /* Centraliza o ícone horizontalmente */
+            margin-right: auto; /* Centraliza o ícone horizontalmente */
+        }
+
+        /* Animação de rotação para o ícone de carregamento */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Estilo para a área de resultados (onde os produtos são exibidos) */
+        .results {
+            display: flex; /* Exibe os itens em linha */
+            flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
+            justify-content: center; /* Centraliza os itens */
+            margin-top: 40px; /* Espaçamento superior */
+            gap: 20px; /* Espaço entre os cards de produtos */
+        }
+
+        /* Estilo do card de cada produto */
+        .product-card {
+            background-color: white; /* Cor de fundo do card */
+            width: 300px; /* Largura do card */
+            height: 500px; /* Altura do card */
+            border-radius: 8px; /* Bordas arredondadas */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave do card */
+            overflow: hidden; /* Impede que o conteúdo ultrapasse os limites do card */
+            transition: transform 0.3s ease; /* Efeito ao passar o mouse sobre o card */
+            display: flex; /* Exibe os elementos do card em uma coluna */
+            flex-direction: column;
+        }
+
+        /* Efeito de hover (quando o mouse passa por cima) no card */
+        .product-card:hover {
+            transform: scale(1.05); /* Aumenta o card ligeiramente */
+        }
+
+        /* Estilo da imagem do produto */
+        .product-card img {
+            width: 100%; /* A imagem ocupa toda a largura do card */
+            height: auto; /* Ajusta a altura automaticamente */
+            max-height: 200px; /* Limita a altura máxima da imagem */
+            object-fit: contain; /* Ajusta a imagem para se encaixar no card */
+            padding: 10px; /* Espaçamento interno da imagem */
+        }
+
+        /* Estilo da área de informações do produto */
+        .product-info {
+            padding: 15px; /* Padding interno */
+            flex-grow: 1; /* Faz a área de informações ocupar o restante do espaço */
+            display: flex; /* Exibe os itens em uma coluna */
+            flex-direction: column;
+            justify-content: space-between; /* Distribui o espaço entre os itens */
+        }
+
+        /* Estilo do título do produto */
+        .product-title {
+            font-weight: bold; /* Título em negrito */
+            font-size: 1.1rem; /* Tamanho da fonte do título */
+            margin-bottom: 10px; /* Espaçamento inferior */
+            word-wrap: break-word; /* Quebra de palavras para não ultrapassar os limites */
+            overflow: hidden; /* Impede o texto de transbordar */
+            text-overflow: ellipsis; /* Exibe "..." se o título for muito longo */
+        }
+
+        /* Estilo da avaliação (rating) do produto */
+        .product-rating {
+            font-size: 0.9rem; /* Tamanho da fonte da avaliação */
+            color: #FF9900; /* Cor do texto das avaliações */
+            margin-top: auto; /* Posiciona o rating na parte inferior do card */
+        }
+
+        /* Estilo das reviews (comentários) do produto */
+        .product-reviews {
+            font-size: 0.9rem; /* Tamanho da fonte das reviews */
+            color: #555; /* Cor do texto das reviews */
+            margin-top: 5px; /* Distância entre rating e reviews */
+        }
+
+        /* Estilo para mensagens de erro */
+        .error-message {
+            color: red; /* Cor da mensagem de erro */
+            text-align: center; /* Centraliza o texto */
+            font-size: 1.2rem; /* Tamanho da fonte */
+            margin-top: 20px; /* Espaçamento superior */
+        }
+
+        /* Estilo do botão fixo para voltar ao topo */
+        #back-to-top {
+            position: fixed; /* Fixa o botão no canto inferior direito */
+            width: auto; /* Largura automática */
+            bottom: 20px; /* Distância do fundo */
+            right: 20px; /* Distância da direita */
+            background-color: #FF9900; /* Cor de fundo */
+            color: white; /* Cor do texto */
+            padding: 10px 15px; /* Padding interno */
+            border: none; /* Sem borda */
+            border-radius: 5px; /* Bordas arredondadas */
+            font-size: 1rem; /* Tamanho da fonte */
+            cursor: pointer; /* Cursor de ponteiro */
+            z-index: 1000; /* Garante que o botão fique sobre outros elementos */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra do botão */
+            transition: background-color 0.3s, box-shadow 0.3s; /* Transição suave para as propriedades */
+        }
+
+        /* Efeito de hover no botão "Voltar ao topo" */
+        #back-to-top:hover {
+            background-color: #e68900; /* Cor do fundo ao passar o mouse */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Aumenta a sombra ao passar o mouse */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Título da aplicação -->
+    <h1>Amazon Scraper</h1>
+
+    <!-- Container da busca -->
+    <div class="search-container">
+        <!-- Caixa de pesquisa -->
+        <input type="text" id="keyword" placeholder="Digite a palavra-chave">
+        <!-- Botão de pesquisa -->
+        <button onclick="searchProducts()">Search</button>
+        <!-- Ícone de carregamento -->
+        <div class="loading" id="loading"></div>
+    </div>
+
+    <!-- Área para exibição dos resultados -->
+    <div class="results" id="results"></div>
+
+    <!-- Área para mensagens de erro -->
+    <div class="error-message" id="error-message"></div>
+
+    <!-- Botão fixo para voltar ao topo -->
+    <button id="back-to-top" onclick="scrollToTop()">Back to top</button>
+
+    <script>
+        // Função que realiza a pesquisa de produtos
+        async function searchProducts() {
+            const keyword = document.getElementById('keyword').value; // Obtém a palavra-chave
+            if (!keyword) { // Verifica se a palavra-chave foi inserida
+                alert("Por favor, insira uma palavra-chave.");
+                return;
+            }
+
+            // Exibe o ícone de carregamento
+            document.getElementById('loading').style.display = 'inline-block';
+
+            try {
+                // Faz a requisição para buscar produtos
+                const response = await fetch(`http://localhost:3000/api/scrape?keyword=${keyword}`);
+                const data = await response.json(); // Converte a resposta em JSON
+                displayResults(data); // Exibe os resultados
+            } catch (error) {
+                console.error("Erro ao buscar dados:", error); // Exibe erro no console
+                document.getElementById('error-message').textContent = "Ocorreu um erro ao buscar os produtos."; // Exibe mensagem de erro
+            } finally {
+                // Esconde o ícone de carregamento
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Função que exibe os resultados dos produtos
+        function displayResults(products) {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = ''; // Limpa os resultados anteriores
+
+            // Filtra os produtos que não têm título "No title"
+            const validProducts = products.filter(product => product.title !== 'No title');
+
+            // Verifica se não há produtos válidos
+            if (validProducts.length === 0) {
+                resultsContainer.innerHTML = "<p>Nenhum produto encontrado.</p>";
+                return;
+            }
+
+            // Exibe cada produto válido
+            validProducts.forEach(product => {
+                const productElement = document.createElement('div');
+                productElement.classList.add('product-card');
+
+                // Verifica a avaliação e exibe "No review" se não houver
+                const reviewsText = product.rating === 'No rating' ? 'No review' : `${product.reviews} review(s)`;
+
+                productElement.innerHTML = `
+                    <img src="${product.image}" alt="${product.title}">
+                    <div class="product-info">
+                        <div class="product-title">${product.title}</div>
+                        <div class="product-rating">⭐ ${product.rating}</div>
+                        <div class="product-reviews">${reviewsText}</div>
+                    </div>
+                `;
+
+                resultsContainer.appendChild(productElement); // Adiciona o card ao container de resultados
+            });
+        }
+
+        // Função que faz a rolagem suave até o topo da página
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+
+</body>
+</html>
